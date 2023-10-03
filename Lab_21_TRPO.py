@@ -1,10 +1,10 @@
 import sqlite3
 import tkinter as tk
-from tkinter import ttk, Menu
-
+from tkinter import ttk
+from tkinter.messagebox import showerror
+import re
 
 class Main_Window():
-    material_menu: Menu
 
     def __init__(self):
         self.root = tk.Tk()
@@ -88,15 +88,19 @@ class Provider_Window():
         self.add_edit_frame.place(relx=0.6, rely=0, relheight=1, relwidth=0.4)
 
         # таблица
-        self.table_pr = ttk.Treeview(self.table_frame, columns=('name_provider', 'contact_person', 'phone_number'),
+        self.table_pr = ttk.Treeview(self.table_frame, columns=( 'id_provider','name_provider', 'contact_person', 'phone_number'),
                                      height=15, show='headings')
+        self.table_pr.column("id_provider", width=150, anchor=tk.NW)
         self.table_pr.column("name_provider", width=150, anchor=tk.NW)
         self.table_pr.column("contact_person", width=200, anchor=tk.NW)
         self.table_pr.column("phone_number", width=120, anchor=tk.CENTER)
 
+        self.table_pr.heading("id_provider", text='id-поставщика')
         self.table_pr.heading("name_provider", text='Наименование')
         self.table_pr.heading("contact_person", text='Контактное лицо')
         self.table_pr.heading("phone_number", text='Номер телефона')
+
+        self.view_info()
 
         # Полоса прокрутки
         self.scroll_bar = ttk.Scrollbar(self.table_frame)
@@ -113,6 +117,11 @@ class Provider_Window():
         self.butsearch.place(relx=0.74, rely=0.92, relheight=0.05, relwidth=0.2)
 
         # поля для ввода
+        self.lname = tk.Label(self.add_edit_frame, text="id постовщика")
+        self.lname.place(relx=0.04, rely=0.02, relheight=0.05, relwidth=0.4)
+        self.ename = ttk.Entry(self.add_edit_frame)
+        self.ename.place(relx=0.45, rely=0.02, relheight=0.05, relwidth=0.5)
+
         self.lname = tk.Label(self.add_edit_frame, text="Наименование")
         self.lname.place(relx=0.04, rely=0.02, relheight=0.05, relwidth=0.4)
         self.ename = ttk.Entry(self.add_edit_frame)
@@ -132,7 +141,7 @@ class Provider_Window():
         self.ephone.insert(0, "+375")
 
         # кнопки
-        self.butadd = tk.Button(self.add_edit_frame, text="Добавить запись")
+        self.butadd = tk.Button(self.add_edit_frame, text="Добавить запись",command = self.add_info)
         self.butadd.place(relx=0.1, rely=0.33, relheight=0.07, relwidth=0.8)
 
         self.butdel = tk.Button(self.add_edit_frame, text="Удалить запись")
@@ -150,6 +159,29 @@ class Provider_Window():
     def quit_win_provider(self):
         self.root2.destroy()
         self.main_view.root.deiconify()
+
+    def view_info(self):
+        '''отобразить данные таблицы Поставщики'''
+        self.db.c.execute('''SELECT name_provider, contact_person, phone_number FROM provider''')
+        [self.table_pr.delete(i) for i in self.table_pr.get_children()]  # очистить таблицу для последующего обновления
+        [self.table_pr.insert('', 'end', values=row) for row in self.db.c.fetchall()]
+    def add_info(self):
+        '''Добавить запись'''
+        info_list_pr = [self.ename.get(), self.econtact.get(), self.ephone.get()]
+        result = re.match("^\+{0,1}\d{0,12}$", info_list_pr[2])
+        if '' in info_list_pr:  # валидация заполненя всех полей ввода
+            showerror(title="Ошибка", message="Все поля должны быть заполнены")
+        elif not result or len(info_list_pr[2]) != 13:  # валидация номера телефона для поля ввода
+            showerror(title="Ошибка",
+                      message="Номер телефона должен быть в формате +375xxxxxxxxx, где x представляет цифру")
+        else:
+            self.db.c.execute('''INSERT INTO provider(name_provider, contact_person, phone_number) VALUES (?, ?, ?)''',
+                              (info_list_pr[0], info_list_pr[1], info_list_pr[2]))
+            self.db.conn.commit()
+            self.view_info()
+            self.ename.delete(0, tk.END)
+            self.econtact.delete(0, tk.END)
+            self.ephone.delete(4, tk.END)
 
 class type_Window():
     '''Окно Поставщики'''
@@ -170,15 +202,14 @@ class type_Window():
         self.add_edit_frame.place(relx=0.6, rely=0, relheight=1, relwidth=0.4)
 
         # таблица
-        self.table_pr = ttk.Treeview(self.table_frame, columns=('name_type', 'contact_person', 'phone_number'),
+        self.table_pr = ttk.Treeview(self.table_frame,
+                                     columns=('id_type', 'name_type'),
                                      height=15, show='headings')
+        self.table_pr.column("id_type", width=150, anchor=tk.NW)
         self.table_pr.column("name_type", width=150, anchor=tk.NW)
-        self.table_pr.column("contact_person", width=200, anchor=tk.NW)
-        self.table_pr.column("phone_number", width=120, anchor=tk.CENTER)
 
-        self.table_pr.heading("name_type", text='Наименование')
-        self.table_pr.heading("contact_person", text='Контактное лицо')
-        self.table_pr.heading("phone_number", text='Номер телефона')
+        self.table_pr.heading("id_type", text='id-типа')
+        self.table_pr.heading("name_type", text='Наименование типа')
 
         # Полоса прокрутки
         self.scroll_bar = ttk.Scrollbar(self.table_frame)
@@ -195,26 +226,13 @@ class type_Window():
         self.butsearch.place(relx=0.74, rely=0.92, relheight=0.05, relwidth=0.2)
 
         # поля для ввода
-        self.lname = tk.Label(self.add_edit_frame, text="Наименование")
-        self.lname.place(relx=0.04, rely=0.02, relheight=0.05, relwidth=0.4)
-        self.ename = ttk.Entry(self.add_edit_frame)
-        self.ename.place(relx=0.45, rely=0.02, relheight=0.05, relwidth=0.5)
-
-        self.lcontact = tk.Label(self.add_edit_frame, text="Контактное лицо")
-        self.lcontact.place(relx=0.04, rely=0.12, relheight=0.05, relwidth=0.4)
-        self.econtact = ttk.Entry(self.add_edit_frame)
-        self.econtact.place(relx=0.45, rely=0.12, relheight=0.05, relwidth=0.5)
-
-        self.lphone = tk.Label(self.add_edit_frame, text="Номер телефона")
-        self.lphone.place(relx=0.04, rely=0.22, relheight=0.05, relwidth=0.4)
-
-        # валидация номера телефона для поля ввода
-        self.ephone = ttk.Entry(self.add_edit_frame)
-        self.ephone.place(relx=0.45, rely=0.22, relheight=0.05, relwidth=0.5)
-        self.ephone.insert(0, "+375")
+        self.ltype = tk.Label(self.add_edit_frame, text="Наименование")
+        self.ltype.place(relx=0.04, rely=0.02, relheight=0.05, relwidth=0.4)
+        self.etype = ttk.Entry(self.add_edit_frame)
+        self.etype.place(relx=0.45, rely=0.02, relheight=0.05, relwidth=0.5)
 
         # кнопки
-        self.butadd = tk.Button(self.add_edit_frame, text="Добавить запись")
+        self.butadd = tk.Button(self.add_edit_frame, text="Добавить запись",command = self.add_info)
         self.butadd.place(relx=0.1, rely=0.33, relheight=0.07, relwidth=0.8)
 
         self.butdel = tk.Button(self.add_edit_frame, text="Удалить запись")
@@ -232,6 +250,19 @@ class type_Window():
     def quit_win_type(self):
         self.root3.destroy()
         self.main_view.root.deiconify()
+    def view_info(self):
+        '''отобразить данные таблицы Поставщики'''
+        self.db.c.execute('''SELECT name_type FROM type''')
+        [self.table_pr.delete(i) for i in self.table_pr.get_children()]  # очистить таблицу для последующего обновления
+        [self.table_pr.insert('', 'end', values=row) for row in self.db.c.fetchall()]
+
+    def add_info(self):
+        '''Добавить запись'''
+        self.db.c.execute('''INSERT INTO type(name_type) VALUES (?)''',
+                          (self.etype.get(),))
+        self.db.conn.commit()
+        self.view_info()
+        self.etype.delete(0, tk.END)
 
 class receipts_Window():
     def __init__(self):
@@ -312,7 +343,6 @@ class receipts_Window():
     def quit_win_receipt(self):
         self.root4.destroy()
         self.main_view.root.deiconify()
-
 class list_Window():
     def __init__(self):
         self.root5 = tk.Tk()
@@ -392,7 +422,6 @@ class list_Window():
     def quit_win_list(self):
         self.root5.destroy()
         self.main_view.root.deiconify()
-
 class write_off_Window():
     def __init__(self):
         self.root7 = tk.Tk()
@@ -556,10 +585,19 @@ class DB:
         self.conn = sqlite3.connect('material_bd.db')  # установили связь с БД (или создали если ее нет)
         self.c = self.conn.cursor()  # создали курсор
         # таблица Книги
+
+        self.c.execute(
+            '''CREATE TABLE IF NOT EXISTS "provider" (
+                       "id_provider" INTEGER NOT NULL,
+                       "name_provider" TEXT NOT NULL,
+                       "contact_person" TEXT NOT NULL,
+                       "phone_number" TEXT NOT NULL,
+                        PRIMARY KEY("id_provider" AUTOINCREMENT)
+                        )'''
+        )
         self.c.execute(
             '''CREATE TABLE IF NOT EXISTS "material" (
                        "id_material" INTEGER NOT NULL,
-                        "id" INTEGER,
                         "name" TEXT NOT NULL,
                         "id_type" INTEGER NOT NULL,
                         "price" REAL NOT NULL,
@@ -567,25 +605,16 @@ class DB:
                         PRIMARY KEY("id_material" AUTOINCREMENT)
                         )'''
         )
-        # таблица Авторы
-        self.c.execute(
-            '''CREATE TABLE IF NOT EXISTS "Material" (
-                        "id" INTEGER NOT NULL,
-                        "name" TEXT NOT NULL,
-                        PRIMARY KEY("id_author" AUTOINCREMENT)
-                        )'''
-        )
         # таблица Жанры
         self.c.execute(
             '''CREATE TABLE IF NOT EXISTS "type" (
-                        "ID" INTEGER NOT NULL,
+                        "id_type" INTEGER NOT NULL,
                         "name_type" TEXT NOT NULL,
-                        PRIMARY KEY("ID" AUTOINCREMENT)
+                        PRIMARY KEY("id_type" AUTOINCREMENT)
                         )'''
         )
 
         self.conn.commit()
-
 
 db = DB()
 win = Main_Window()
