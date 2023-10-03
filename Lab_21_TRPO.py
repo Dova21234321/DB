@@ -113,7 +113,7 @@ class Provider_Window():
         self.esearch = ttk.Entry(self.table_frame)
         self.esearch.place(relx=0.02, rely=0.92, relheight=0.05, relwidth=0.7)
 
-        self.butsearch = tk.Button(self.table_frame, text="Найти")
+        self.butsearch = tk.Button(self.table_frame, text="Найти",command = self.search_info)
         self.butsearch.place(relx=0.74, rely=0.92, relheight=0.05, relwidth=0.2)
 
         # поля для ввода
@@ -144,13 +144,13 @@ class Provider_Window():
         self.butadd = tk.Button(self.add_edit_frame, text="Добавить запись",command = self.add_info)
         self.butadd.place(relx=0.1, rely=0.33, relheight=0.07, relwidth=0.8)
 
-        self.butdel = tk.Button(self.add_edit_frame, text="Удалить запись")
+        self.butdel = tk.Button(self.add_edit_frame, text="Удалить запись",command = self.delete_info)
         self.butdel.place(relx=0.1, rely=0.44, relheight=0.07, relwidth=0.8)
 
-        self.buted = tk.Button(self.add_edit_frame, text="Редактировать запись")
+        self.buted = tk.Button(self.add_edit_frame, text="Редактировать запись",command = self.update_info)
         self.buted.place(relx=0.1, rely=0.55, relheight=0.07, relwidth=0.8)
 
-        self.butsave = tk.Button(self.add_edit_frame, text="Сохранить изменения")
+        self.butsave = tk.Button(self.add_edit_frame, text="Сохранить изменения",command = self.save_info)
         self.butsave.place(relx=0.1, rely=0.66, relheight=0.07, relwidth=0.8)
 
         self.butquit = tk.Button(self.add_edit_frame, text="Закрыть")
@@ -165,6 +165,42 @@ class Provider_Window():
         self.db.c.execute('''SELECT name_provider, contact_person, phone_number FROM provider''')
         [self.table_pr.delete(i) for i in self.table_pr.get_children()]  # очистить таблицу для последующего обновления
         [self.table_pr.insert('', 'end', values=row) for row in self.db.c.fetchall()]
+
+    def delete_info(self):
+        '''Удалить запись'''
+        try:
+            self.db.c.execute('''DELETE FROM provider WHERE name_provider=? AND contact_person=? AND phone_number=?''',
+                              (self.table_pr.item(self.table_pr.selection())['values'][0],
+                               self.table_pr.item(self.table_pr.selection())['values'][1],
+                               '+' + str(self.table_pr.item(self.table_pr.selection())['values'][2])))
+            self.db.conn.commit()
+            self.view_info()
+        except IndexError:
+            showinfo(title="Внимание!", message="Выберите запись для удаления")
+
+    def update_info(self):
+        '''Редактировать запись'''
+        try:
+            self.ename.delete(0, tk.END)
+            self.ename.insert(0, self.table_pr.item(self.table_pr.selection())['values'][0])
+            self.econtact.delete(0, tk.END)
+            self.econtact.insert(0, self.table_pr.item(self.table_pr.selection())['values'][1])
+            self.ephone.delete(0, tk.END)
+            self.ephone.insert(0, '+' + str(self.table_pr.item(self.table_pr.selection())['values'][2]))
+        except IndexError:
+            showinfo(title="Внимание!", message="Выберите запись для редактирования")
+
+    def save_info(self):
+        '''Сохранить изменения'''
+        self.db.c.execute('''SELECT * FROM provider''')
+        provider_info = self.db.c.fetchall()
+        for el in provider_info:
+            if el[1] == self.table_pr.item(self.table_pr.selection())['values'][0] and el[2] == \
+                    self.table_pr.item(self.table_pr.selection())['values'][1] and el[3] == '+' + str(
+                    self.table_pr.item(self.table_pr.selection())['values'][2]):
+                id_provider = el[0]
+                break
+
     def add_info(self):
         '''Добавить запись'''
         info_list_pr = [self.ename.get(), self.econtact.get(), self.ephone.get()]
@@ -182,6 +218,14 @@ class Provider_Window():
             self.ename.delete(0, tk.END)
             self.econtact.delete(0, tk.END)
             self.ephone.delete(4, tk.END)
+
+    def search_info(self):
+        '''Кнопка Найти'''
+        info = ('%' + self.esearch.get() + '%',)
+        self.db.c.execute('''SELECT name_provider, contact_person, phone_number FROM provider 
+                          WHERE name_provider LIKE ?''', info)
+        [self.table_pr.delete(i) for i in self.table_pr.get_children()]  # очистить таблицу для последующего обновления
+        [self.table_pr.insert('', 'end', values=row) for row in self.db.c.fetchall()]
 
 class type_Window():
     '''Окно Поставщики'''
@@ -235,18 +279,17 @@ class type_Window():
         self.butadd = tk.Button(self.add_edit_frame, text="Добавить запись",command = self.add_info)
         self.butadd.place(relx=0.1, rely=0.33, relheight=0.07, relwidth=0.8)
 
-        self.butdel = tk.Button(self.add_edit_frame, text="Удалить запись")
+        self.butdel = tk.Button(self.add_edit_frame, text="Удалить запись",command = self.delete_info)
         self.butdel.place(relx=0.1, rely=0.44, relheight=0.07, relwidth=0.8)
 
-        self.buted = tk.Button(self.add_edit_frame, text="Редактировать запись")
+        self.buted = tk.Button(self.add_edit_frame, text="Редактировать запись",command = self.update_info)
         self.buted.place(relx=0.1, rely=0.55, relheight=0.07, relwidth=0.8)
 
-        self.butsave = tk.Button(self.add_edit_frame, text="Сохранить изменения")
+        self.butsave = tk.Button(self.add_edit_frame, text="Сохранить изменения",command = self.save_info)
         self.butsave.place(relx=0.1, rely=0.66, relheight=0.07, relwidth=0.8)
 
-        self.butquit = tk.Button(self.add_edit_frame, text="Закрыть")
+        self.butquit = tk.Button(self.add_edit_frame, text="Закрыть",command = self)
         self.butquit.place(relx=0.1, rely=0.77, relheight=0.07, relwidth=0.8)
-
     def quit_win_type(self):
         self.root3.destroy()
         self.main_view.root.deiconify()
@@ -255,7 +298,6 @@ class type_Window():
         self.db.c.execute('''SELECT name_type FROM type''')
         [self.table_pr.delete(i) for i in self.table_pr.get_children()]  # очистить таблицу для последующего обновления
         [self.table_pr.insert('', 'end', values=row) for row in self.db.c.fetchall()]
-
     def add_info(self):
         '''Добавить запись'''
         self.db.c.execute('''INSERT INTO type(name_type) VALUES (?)''',
@@ -263,6 +305,37 @@ class type_Window():
         self.db.conn.commit()
         self.view_info()
         self.etype.delete(0, tk.END)
+    def delete_info(self):
+        '''Удалить запись'''
+        try:
+            self.db.c.execute('''DELETE FROM type WHERE name_type=?''',
+                              (self.table_pr.item(self.table_pr.selection())['values']))
+            self.db.conn.commit()
+            self.view_info()
+        except IndexError:
+            showinfo(title="Внимание!", message="Выберите запись для удаления")
+    def update_info(self):
+        '''Редактировать запись'''
+        try:
+            self.etype.delete(0, tk.END)
+            self.etype.insert(0, self.table_pr.item(self.table_pr.selection())['values'][0])
+        except IndexError:
+            showinfo(title="Внимание!", message="Выберите запись для редактирования")
+    def save_info(self):
+        '''Сохранить изменения'''
+        self.db.c.execute('''SELECT * FROM type''')
+        type_info = self.db.c.fetchall()
+        for el in type_info:
+            if el[1] == self.table_pr.item(self.table_pr.selection())['values']:
+                id_type = el[0]
+                break
+    def search_info(self):
+        '''Кнопка Найти'''
+        info = ('%' + self.esearch.get() + '%',)
+        self.db.c.execute('''SELECT name_type FROM type 
+                          WHERE name_type LIKE ?''', info)
+        [self.table_pr.delete(i) for i in self.table_pr.get_children()]  # очистить таблицу для последующего обновления
+        [self.table_pr.insert('', 'end', values=row) for row in self.db.c.fetchall()]
 
 class receipts_Window():
     def __init__(self):
