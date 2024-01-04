@@ -1,3 +1,4 @@
+import os,sys
 import sqlite3
 import tkinter as tk
 from tkinter import ttk
@@ -25,16 +26,16 @@ class Main_Window():
         self.ref_menu.add_command(label="Проставщики", command=self.open_win_provider)
         self.ref_menu.add_command(label="Типы", command=self.open_win_type)
 
-        self.material_menu.add_command(label='Поступление материалов',command=self.open_win_receipt)
-        self.material_menu.add_command(label='Список материалов',command=self.open_win_list)
-        #self.material_menu.add_command(label='Списание материалов',command=self.open_win_write_off)
+        self.material_menu.add_command(label='Передача в производство', command=self.open_win_receipt)
+        self.material_menu.add_command(label='Список материалов', command=self.open_win_list)
+        self.material_menu.add_command(label='Списание материалов')
 
         self.otch_menu.add_command(label="Отчет по поступлению")
         self.otch_menu.add_command(label="Отчет по передаче в производство")
         self.otch_menu.add_command(label="Отчет по списанию материалов")
 
-        self.help_menu.add_command(label="Руководство пользователя")
-        self.help_menu.add_command(label="О программе")
+        self.help_menu.add_command(label="Руководство пользователя" , command=self.open_management)
+        self.help_menu.add_command(label="О программе" , command=self.open_win_prog)
 
         self.main_menu.add_cascade(label="Файл", menu=self.file_menu)
         self.main_menu.add_cascade(label="Справочники", menu=self.ref_menu)
@@ -44,6 +45,9 @@ class Main_Window():
 
         # привязываем меню к созданному окну
         self.root.config(menu=self.main_menu)
+
+    def open_management(self):
+        os.system("guide.HTML")
 
     def open_win_provider(self):
         self.root.withdraw()  # скрыть окно
@@ -60,6 +64,11 @@ class Main_Window():
     def open_win_list(self):
         self.root.withdraw()  # скрыть окно
         list_Window()
+
+    def open_win_prog(self):
+        self.root.withdraw()
+        prog_Window()
+
 
 class Provider_Window():
     '''Окно Поставщики'''
@@ -80,7 +89,8 @@ class Provider_Window():
         self.add_edit_frame.place(relx=0.6, rely=0, relheight=1, relwidth=0.4)
 
         # таблица
-        self.table_pr = ttk.Treeview(self.table_frame, columns=( 'id_provider','name_provider', 'contact_person', 'phone_number'),
+        self.table_pr = ttk.Treeview(self.table_frame,
+                                     columns=('id_provider', 'name_provider', 'contact_person', 'phone_number'),
                                      height=15, show='headings')
         self.table_pr.column("id_provider", width=150, anchor=tk.NW)
         self.table_pr.column("name_provider", width=150, anchor=tk.NW)
@@ -105,7 +115,7 @@ class Provider_Window():
         self.esearch = ttk.Entry(self.table_frame)
         self.esearch.place(relx=0.02, rely=0.92, relheight=0.05, relwidth=0.7)
 
-        self.butsearch = tk.Button(self.table_frame, text="Найти",command = self.search_info)
+        self.butsearch = tk.Button(self.table_frame, text="Найти", command=self.search_info)
         self.butsearch.place(relx=0.74, rely=0.92, relheight=0.05, relwidth=0.2)
 
         # поля для ввода
@@ -133,16 +143,16 @@ class Provider_Window():
         self.ephone.insert(0, "+375")
 
         # кнопки
-        self.butadd = tk.Button(self.add_edit_frame, text="Добавить запись",command = self.add_info)
+        self.butadd = tk.Button(self.add_edit_frame, text="Добавить запись", command=self.add_info)
         self.butadd.place(relx=0.1, rely=0.33, relheight=0.07, relwidth=0.8)
 
-        self.butdel = tk.Button(self.add_edit_frame, text="Удалить запись",command = self.delete_info)
+        self.butdel = tk.Button(self.add_edit_frame, text="Удалить запись", command=self.delete_info)
         self.butdel.place(relx=0.1, rely=0.44, relheight=0.07, relwidth=0.8)
 
-        self.buted = tk.Button(self.add_edit_frame, text="Редактировать запись",command = self.update_info)
+        self.buted = tk.Button(self.add_edit_frame, text="Редактировать запись", command=self.update_info)
         self.buted.place(relx=0.1, rely=0.55, relheight=0.07, relwidth=0.8)
 
-        self.butsave = tk.Button(self.add_edit_frame, text="Сохранить изменения",command = self.save_info)
+        self.butsave = tk.Button(self.add_edit_frame, text="Сохранить изменения", command=self.save_info)
         self.butsave.place(relx=0.1, rely=0.66, relheight=0.07, relwidth=0.8)
 
         self.butquit = tk.Button(self.add_edit_frame, text="Закрыть")
@@ -180,7 +190,7 @@ class Provider_Window():
             self.ephone.delete(0, tk.END)
             self.ephone.insert(0, '+' + str(self.table_pr.item(self.table_pr.selection())['values'][2]))
         except IndexError:
-            showinfo(title="Внимание!", message="Выберите запись для редактирования")
+            showerror(title="Внимание!", message="Выберите запись для редактирования")
 
     def save_info(self):
         '''Сохранить изменения'''
@@ -189,7 +199,7 @@ class Provider_Window():
         for el in provider_info:
             if el[1] == self.table_pr.item(self.table_pr.selection())['values'][0] and el[2] == \
                     self.table_pr.item(self.table_pr.selection())['values'][1] and el[3] == '+' + str(
-                    self.table_pr.item(self.table_pr.selection())['values'][2]):
+                self.table_pr.item(self.table_pr.selection())['values'][2]):
                 id_provider = el[0]
                 break
 
@@ -268,28 +278,31 @@ class type_Window():
         self.etype.place(relx=0.45, rely=0.02, relheight=0.05, relwidth=0.5)
 
         # кнопки
-        self.butadd = tk.Button(self.add_edit_frame, text="Добавить запись",command = self.add_info)
+        self.butadd = tk.Button(self.add_edit_frame, text="Добавить запись", command=self.add_info)
         self.butadd.place(relx=0.1, rely=0.33, relheight=0.07, relwidth=0.8)
 
-        self.butdel = tk.Button(self.add_edit_frame, text="Удалить запись",command = self.delete_info)
+        self.butdel = tk.Button(self.add_edit_frame, text="Удалить запись", command=self.delete_info)
         self.butdel.place(relx=0.1, rely=0.44, relheight=0.07, relwidth=0.8)
 
-        self.buted = tk.Button(self.add_edit_frame, text="Редактировать запись",command = self.update_info)
+        self.buted = tk.Button(self.add_edit_frame, text="Редактировать запись", command=self.update_info)
         self.buted.place(relx=0.1, rely=0.55, relheight=0.07, relwidth=0.8)
 
-        self.butsave = tk.Button(self.add_edit_frame, text="Сохранить изменения",command = self.save_info)
+        self.butsave = tk.Button(self.add_edit_frame, text="Сохранить изменения", command=self.save_info)
         self.butsave.place(relx=0.1, rely=0.66, relheight=0.07, relwidth=0.8)
 
-        self.butquit = tk.Button(self.add_edit_frame, text="Закрыть",command = self)
+        self.butquit = tk.Button(self.add_edit_frame, text="Закрыть", command=self)
         self.butquit.place(relx=0.1, rely=0.77, relheight=0.07, relwidth=0.8)
+
     def quit_win_type(self):
         self.root3.destroy()
         self.main_view.root.deiconify()
+
     def view_info(self):
         '''отобразить данные таблицы Поставщики'''
         self.db.c.execute('''SELECT name_type FROM type''')
         [self.table_pr.delete(i) for i in self.table_pr.get_children()]  # очистить таблицу для последующего обновления
         [self.table_pr.insert('', 'end', values=row) for row in self.db.c.fetchall()]
+
     def add_info(self):
         '''Добавить запись'''
         self.db.c.execute('''INSERT INTO type(name_type) VALUES (?)''',
@@ -297,6 +310,7 @@ class type_Window():
         self.db.conn.commit()
         self.view_info()
         self.etype.delete(0, tk.END)
+
     def delete_info(self):
         '''Удалить запись'''
         try:
@@ -306,6 +320,7 @@ class type_Window():
             self.view_info()
         except IndexError:
             showinfo(title="Внимание!", message="Выберите запись для удаления")
+
     def update_info(self):
         '''Редактировать запись'''
         try:
@@ -313,6 +328,7 @@ class type_Window():
             self.etype.insert(0, self.table_pr.item(self.table_pr.selection())['values'][0])
         except IndexError:
             showinfo(title="Внимание!", message="Выберите запись для редактирования")
+
     def save_info(self):
         '''Сохранить изменения'''
         self.db.c.execute('''SELECT * FROM type''')
@@ -321,6 +337,7 @@ class type_Window():
             if el[1] == self.table_pr.item(self.table_pr.selection())['values']:
                 id_type = el[0]
                 break
+
     def search_info(self):
         '''Кнопка Найти'''
         info = ('%' + self.esearch.get() + '%',)
@@ -330,7 +347,7 @@ class type_Window():
         [self.table_pr.insert('', 'end', values=row) for row in self.db.c.fetchall()]
 
 class receipts_Window():
-    
+
     def __init__(self):
         self.root2 = tk.Tk()
         self.root2.geometry("1300x400")
@@ -371,7 +388,7 @@ class receipts_Window():
 
         self.view_records_book()
 
-    def record(self,id_materia, name, id_type, id_provider, name_provider, price, count):
+    def record(self, id_materia, name, id_type, id_provider, name_provider, price, count):
         '''обновление и вызов функции для отображения данных'''
         self.db.save_data_book(id_materia, name, id_type, id_provider, name_provider, price, count)
         self.view_records_book()
@@ -385,7 +402,8 @@ class receipts_Window():
     def update_records_book(self, id_materia, name, id_type, id_provider, name_provider, price, count):
         self.db.c.execute('''UPDATE book SET id_materia=?, name=?, id_type=?, id_provider=?, name_provider=?,
                           price=?, count=? WHERE ID=?''',
-                          (id_materia, name, id_type, id_provider, name_provider,price, count, self.tree.set(self.tree.selection()[0], '#1')))
+                          (id_materia, name, id_type, id_provider, name_provider, price, count,
+                           self.tree.set(self.tree.selection()[0], '#1')))
         self.db.conn.commit()
         self.view_records_book()
 
@@ -407,6 +425,7 @@ class receipts_Window():
         df.to_excel(writer, 'Sheet1')
         # сохраним результат
         writer.close()
+
 class list_Window():
     def __init__(self):
         self.root2 = tk.Tk()
@@ -448,7 +467,7 @@ class list_Window():
 
         self.view_records_book()
 
-    def record(self,id_materia, name, id_type, id_provider, name_provider, price, count):
+    def record(self, id_materia, name, id_type, id_provider, name_provider, price, count):
         '''обновление и вызов функции для отображения данных'''
         self.db.save_data_book(id_materia, name, id_type, id_provider, name_provider, price, count)
         self.view_records_book()
@@ -462,7 +481,8 @@ class list_Window():
     def update_records_book(self, id_materia, name, id_type, id_provider, name_provider, price, count):
         self.db.c.execute('''UPDATE book SET id_materia=?, name=?, id_type=?, id_provider=?, name_provider=?,
                           price=?, count=? WHERE ID=?''',
-                          (id_materia, name, id_type, id_provider, name_provider,price, count, self.tree.set(self.tree.selection()[0], '#1')))
+                          (id_materia, name, id_type, id_provider, name_provider, price, count,
+                           self.tree.set(self.tree.selection()[0], '#1')))
         self.db.conn.commit()
         self.view_records_book()
 
@@ -484,6 +504,27 @@ class list_Window():
         df.to_excel(writer, 'Sheet1')
         # сохраним результат
         writer.close()
+
+class prog_Window():
+    def __init__(self):
+        self.root2 = tk.Tk()
+        self.root2.geometry("400x100")
+        self.root2.title("Материальный склад/о Программе")
+        self.root2.protocol('WM_DELETE_WINDOW', lambda: self.quit_win())  # перехват кнопки Х
+        self.main_view = win
+        self.db = db
+
+        self.label = tk.Label(self.root2, text="Иванов Евгений Максимович\nПО-31\nВерсия 0.2")
+        self.label.pack(anchor='center')
+
+    def quit_win(self):
+        self.root2.destroy()
+        self.main_view.root.deiconify()
+
+class AP():
+    def __init__(self):
+        self.conn = os.system('О программе.HTML')
+
 
 class DB:
     def __init__(self):
